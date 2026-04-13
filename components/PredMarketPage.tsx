@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import type { Market } from "@/lib/schema";
-import OnchainMarketPage from "./OnchainMarketPage";
 
 interface Outcome {
   title: string;
@@ -33,17 +33,10 @@ function Spinner() {
 }
 
 export default function PredMarketPage({ market }: Props) {
+  const router = useRouter();
   const { isConnected } = useAccount();
-  const [onChainId, setOnChainId] = useState<bigint | null>(
-    market.onChainMarketId !== null ? BigInt(market.onChainMarketId) : null
-  );
   const [isActivating, setIsActivating] = useState(false);
   const [activateError, setActivateError] = useState("");
-
-  // Once activated, delegate to the standard on-chain market page
-  if (onChainId !== null) {
-    return <OnchainMarketPage marketId={onChainId} />;
-  }
 
   const outcomes = (market.outcomes as Outcome[] | null) ?? [];
   const sorted = [...outcomes].sort((a, b) => b.probability - a.probability);
@@ -61,7 +54,7 @@ export default function PredMarketPage({ market }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Activation failed");
-      setOnChainId(BigInt(data.marketId));
+      router.push(`/market/${data.marketId}`);
     } catch (err) {
       setActivateError(err instanceof Error ? err.message : "Unknown error");
     } finally {

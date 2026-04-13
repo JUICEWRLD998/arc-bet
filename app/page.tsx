@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { FaucetBanner } from "@/components/FaucetBanner";
 import PredMarketCard from "@/components/PredMarketCard";
+import OnchainMarketCard from "@/components/OnchainMarketCard";
 import type { Market } from "@/lib/schema";
+import type { OnchainMarket } from "@/app/api/markets/onchain/route";
 import Link from "next/link";
 
-const CATEGORIES = ["all", "crypto", "sports", "politics", "economy", "geopolitics", "culture"] as const;
+const CATEGORIES = ["all", "crypto", "sports", "politics", "economy", "geopolitics", "culture", "custom"] as const;
 type Category = (typeof CATEGORIES)[number];
 
 function SkeletonCard() {
@@ -24,6 +26,7 @@ export default function Home() {
   const [category, setCategory] = useState<Category>("all");
   const [page, setPage] = useState(1);
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [onchainMarkets, setOnchainMarkets] = useState<OnchainMarket[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,11 +35,21 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/markets/sync?category=${cat}&page=${pg}`);
-      if (!res.ok) throw new Error("Failed to load markets");
-      const data = await res.json();
-      setMarkets(data.markets ?? []);
-      setTotal(data.total ?? 0);
+      if (cat === "custom") {
+        const res = await fetch("/api/markets/onchain");
+        if (!res.ok) throw new Error("Failed to load custom markets");
+        const data = await res.json();
+        setOnchainMarkets(data.markets ?? []);
+        setMarkets([]);
+        setTotal(0);
+      } else {
+        const res = await fetch(`/api/markets/sync?category=${cat}&page=${pg}`);
+        if (!res.ok) throw new Error("Failed to load markets");
+        const data = await res.json();
+        setMarkets(data.markets ?? []);
+        setOnchainMarkets([]);
+        setTotal(data.total ?? 0);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -87,6 +100,7 @@ export default function Home() {
             <button
               key={cat}
               onClick={() => handleCategory(cat)}
+              suppressHydrationWarning
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
                 category === cat
                   ? "bg-indigo-600 text-white"
@@ -105,6 +119,27 @@ export default function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
+        ) : category === "custom" ? (
+          onchainMarkets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+              <p className="font-semibold text-zinc-900 dark:text-zinc-50">No custom markets yet</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Be the first to create one!
+              </p>
+              <Link
+                href="/create"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
+              >
+                Create a Market
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {onchainMarkets.map((m) => (
+                <OnchainMarketCard key={m.id} market={m} />
+              ))}
+            </div>
+          )
         ) : markets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
             <p className="font-semibold text-zinc-900 dark:text-zinc-50">No markets found</p>
@@ -120,8 +155,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Pagination */}
-        {!loading && totalPages > 1 && (
+        {/* Pagination — only for predscope categories */}
+        {!loading && category !== "custom" && totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 pt-4">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}

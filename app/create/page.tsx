@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
+import { decodeEventLog } from "viem";
 import { Navbar } from "@/components/Navbar";
 import { PREDICTION_MARKET_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
 
@@ -15,11 +16,37 @@ export default function CreatePage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [allowedAddress, setAllowedAddress] = useState("");
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash,
   });
+
+  // Decode marketId from receipt logs
+  let createdMarketId: bigint | null = null;
+  if (receipt) {
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({ abi: PREDICTION_MARKET_ABI, ...log });
+        if (decoded.eventName === "MarketCreated") {
+          createdMarketId = (decoded.args as { marketId: bigint }).marketId;
+          break;
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  const shareUrl = createdMarketId != null
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/market/${createdMarketId}`
+    : null;
+
+  function handleCopy() {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +93,7 @@ export default function CreatePage() {
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center space-y-4 max-w-md">
+          <div className="text-center space-y-4 max-w-md w-full">
             <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -89,12 +116,38 @@ export default function CreatePage() {
             <p className="text-zinc-500 dark:text-zinc-400">
               Your prediction market is now live on Arc Network.
             </p>
-            <button
-              onClick={() => router.push("/")}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors"
-            >
-              View All Markets
-            </button>
+
+            {shareUrl && (
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-2 text-left">
+                <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Share this market</p>
+                <div className="flex items-center gap-2">
+                  <p className="flex-1 text-sm font-mono text-zinc-700 dark:text-zinc-300 truncate">{shareUrl}</p>
+                  <button
+                    onClick={handleCopy}
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-center pt-2">
+              {createdMarketId != null && (
+                <button
+                  onClick={() => router.push(`/market/${createdMarketId}`)}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors"
+                >
+                  View Market
+                </button>
+              )}
+              <button
+                onClick={() => router.push("/")}
+                className="px-6 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-semibold transition-colors"
+              >
+                All Markets
+              </button>
+            </div>
           </div>
         </main>
       </div>

@@ -53,6 +53,14 @@ export default function OnchainMarketPage({ marketId }: Props) {
   const [betError, setBetError] = useState("");
   const [activeBetSide, setActiveBetSide] = useState<"yes" | "no" | null>(null);
   const [activeTx, setActiveTx] = useState<"bet" | "resolve" | "claim" | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  function handleShare() {
+    const url = `${window.location.origin}/market/${marketId}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   // ── Reads ────────────────────────────────────────────────────────────────
   const { data: marketData, refetch: refetchMarket } = useReadContract({
@@ -227,6 +235,17 @@ export default function OnchainMarketPage({ marketId }: Props) {
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 leading-snug">
             {question}
           </h1>
+          <div>
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-indigo-500 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              {copied ? "Link copied!" : "Share market"}
+            </button>
+          </div>
         </div>
 
         {/* Odds row for fixed-odds markets */}

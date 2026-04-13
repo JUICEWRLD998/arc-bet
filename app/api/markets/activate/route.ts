@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createWalletClient, http, parseAbi, parseUnits, decodeEventLog } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { db } from "@/lib/db";
+
+const PREDSCOPE_URL = "https://predscope.com/api/markets.json";
 
 const arcTestnet = {
   id: 5042002,
@@ -32,15 +33,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "slug required" }, { status: 400 });
   }
 
-  const market = await db.market.findUnique({ where: { slug } });
-  if (!market) {
+  // Fetch market details directly from predscope (cached)
+  const psRes = await fetch(PREDSCOPE_URL, { next: { revalidate: 600 } });
+  if (!psRes.ok) {
+    return NextResponse.json({ error: "Failed to fetch markets" }, { status: 502 });
+  }
+  const { markets: all } = await psRes.json();
+  const raw = (all as { slug: string }[]).find((m) => m.slug === slug);
+  if (!raw) {
     return NextResponse.json({ error: "Market not found" }, { status: 404 });
   }
 
-  // Already activated — return existing id
-  if (market.onChainMarketId !== null) {
-    return NextResponse.json({ marketId: market.onChainMarketId });
-  }
+  const sorted = [...(raw.outcomes as { probability: number; title: string }[])]
+    .sort((a, b) => b.probability - a.probability);
+  const top = sorted[0];
+  const prob = Math.max(0.01, Math.min(0.99, top.probability));
+  const oddsYes = Math.floor((1 / prob) * 95);
+  const oddsNo = Math.floor((1 / (1 - prob)) * 95);
 
   const privKey = process.env.OPERATOR_PRIVATE_KEY;
   if (!privKey) {
@@ -57,14 +66,14 @@ export async function POST(req: NextRequest) {
     abi: ABI_SNIPPET,
     functionName: "createMarket",
     args: [
-      market.title,
+      raw.title,
       endTime,
       false,
       "0x0000000000000000000000000000000000000000",
-      market.yesLabel,
-      market.noLabel,
-      BigInt(market.oddsYes),
-      BigInt(market.oddsNo),
+      top.title,
+      `${top.title} does not happen`,
+      BigInt(oddsYes),
+      BigInt(oddsNo),
     ],
     value: HOUSE_POOL,
   });
@@ -93,11 +102,6 @@ export async function POST(req: NextRequest) {
   if (onChainMarketId === null) {
     return NextResponse.json({ error: "Could not parse MarketCreated event" }, { status: 500 });
   }
-
-  await db.market.update({
-    where: { slug },
-    data: { onChainMarketId },
-  });
 
   return NextResponse.json({ marketId: onChainMarketId });
 }

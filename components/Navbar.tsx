@@ -1,10 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { usePathname } from "next/navigation";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { ModeToggle } from "@/components/ModeToggle";
 
+function ConnectButton() {
+  const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  if (isConnected && address) {
+    return (
+      <button
+        onClick={() => disconnect()}
+        className="px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-mono"
+      >
+        {address.slice(0, 6)}…{address.slice(-4)}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => connect({ connector: connectors[0] })}
+      disabled={isPending}
+      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-sm font-semibold text-white transition-colors"
+    >
+      {isPending ? "Connecting…" : "Connect Wallet"}
+    </button>
+  );
+}
+
 export function Navbar() {
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
@@ -22,27 +51,23 @@ export function Navbar() {
 
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-1">
-          <NavLink href="/">Markets</NavLink>
-          <NavLink href="/create">Create</NavLink>
-          <NavLink href="/my-bets">My Bets</NavLink>
+          <NavLink href="/" active={pathname === "/"}>Markets</NavLink>
+          <NavLink href="/create" active={pathname === "/create"}>Create</NavLink>
+          <NavLink href="/my-bets" active={pathname === "/my-bets"}>My Bets</NavLink>
         </nav>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
           <ModeToggle />
-          <ConnectButton
-            accountStatus="avatar"
-            chainStatus="icon"
-            showBalance={false}
-          />
+          <ConnectButton />
         </div>
       </div>
 
       {/* Mobile nav */}
       <nav className="md:hidden flex items-center gap-1 px-4 pb-3">
-        <NavLink href="/">Markets</NavLink>
-        <NavLink href="/create">Create</NavLink>
-        <NavLink href="/my-bets">My Bets</NavLink>
+        <NavLink href="/" active={pathname === "/"}>Markets</NavLink>
+        <NavLink href="/create" active={pathname === "/create"}>Create</NavLink>
+        <NavLink href="/my-bets" active={pathname === "/my-bets"}>My Bets</NavLink>
       </nav>
     </header>
   );
@@ -50,17 +75,26 @@ export function Navbar() {
 
 function NavLink({
   href,
+  active,
   children,
 }: {
   href: string;
+  active?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className="px-3 py-1.5 rounded-md text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+        active
+          ? "text-zinc-900 dark:text-zinc-50"
+          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      }`}
     >
       {children}
+      {active && (
+        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-0.5 rounded-full bg-indigo-600" />
+      )}
     </Link>
   );
 }
