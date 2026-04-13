@@ -34,16 +34,8 @@ contract PredictionMarketTest is Test {
         assertEq(id, 0);
         assertEq(market.marketCount(), 1);
 
-        (
-            string memory question,
-            address mCreator,
-            uint256 mEndTime,
-            bool resolved,
-            ,
-            ,
-            ,
-            bool isPrivate,
-        ) = market.getMarket(0);
+        (string memory question, address mCreator, uint256 mEndTime, bool resolved,,,, bool isPrivate,) =
+            market.getMarket(0);
 
         assertEq(question, "Will ETH hit $10k?");
         assertEq(mCreator, creator);
@@ -75,7 +67,7 @@ contract PredictionMarketTest is Test {
         vm.prank(bettor1);
         market.placeBet{value: 10 ether}(0, true);
 
-        (, , , , , uint256 totalYesPool, uint256 totalNoPool, , ) = market.getMarket(0);
+        (,,,,, uint256 totalYesPool, uint256 totalNoPool,,) = market.getMarket(0);
         assertEq(totalYesPool, 10 ether);
         assertEq(totalNoPool, 0);
 
@@ -91,7 +83,7 @@ contract PredictionMarketTest is Test {
         vm.prank(bettor2);
         market.placeBet{value: 5 ether}(0, false);
 
-        (, , , , , uint256 totalYesPool, uint256 totalNoPool, , ) = market.getMarket(0);
+        (,,,,, uint256 totalYesPool, uint256 totalNoPool,,) = market.getMarket(0);
         assertEq(totalYesPool, 0);
         assertEq(totalNoPool, 5 ether);
     }
@@ -151,7 +143,7 @@ contract PredictionMarketTest is Test {
         vm.prank(creator);
         market.resolveMarket(0, true);
 
-        (, , , bool resolved, bool outcome, , , , ) = market.getMarket(0);
+        (,,, bool resolved, bool outcome,,,,) = market.getMarket(0);
         assertTrue(resolved);
         assertTrue(outcome);
     }

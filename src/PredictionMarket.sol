@@ -54,23 +54,11 @@ contract PredictionMarket {
         address allowedAddress
     );
 
-    event BetPlaced(
-        uint256 indexed marketId,
-        address indexed bettor,
-        uint256 amount,
-        bool isYes
-    );
+    event BetPlaced(uint256 indexed marketId, address indexed bettor, uint256 amount, bool isYes);
 
-    event MarketResolved(
-        uint256 indexed marketId,
-        bool outcome
-    );
+    event MarketResolved(uint256 indexed marketId, bool outcome);
 
-    event WinningsClaimed(
-        uint256 indexed marketId,
-        address indexed claimer,
-        uint256 amount
-    );
+    event WinningsClaimed(uint256 indexed marketId, address indexed claimer, uint256 amount);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Functions
@@ -81,12 +69,10 @@ contract PredictionMarket {
     /// @param endTime      Unix timestamp after which betting is closed.
     /// @param isPrivate    Whether participation is restricted to one address.
     /// @param allowedAddress  Address allowed to bet (ignored when isPrivate = false).
-    function createMarket(
-        string calldata question,
-        uint256 endTime,
-        bool isPrivate,
-        address allowedAddress
-    ) external returns (uint256 marketId) {
+    function createMarket(string calldata question, uint256 endTime, bool isPrivate, address allowedAddress)
+        external
+        returns (uint256 marketId)
+    {
         require(bytes(question).length > 0, "PredictionMarket: empty question");
         require(endTime > block.timestamp, "PredictionMarket: end time in the past");
 
@@ -179,7 +165,7 @@ contract PredictionMarket {
         // Proportional payout: (user bet / winning pool) * total pool
         uint256 payout = (userBet.amount * totalPool) / winningPool;
 
-        (bool success, ) = payable(msg.sender).call{value: payout}("");
+        (bool success,) = payable(msg.sender).call{value: payout}("");
         require(success, "PredictionMarket: transfer failed");
 
         emit WinningsClaimed(marketId, msg.sender, payout);
@@ -221,11 +207,7 @@ contract PredictionMarket {
     }
 
     /// @notice Returns the bet a user has placed on a market.
-    function getUserBet(uint256 marketId, address user)
-        external
-        view
-        returns (uint256 amount, bool isYes)
-    {
+    function getUserBet(uint256 marketId, address user) external view returns (uint256 amount, bool isYes) {
         Bet storage b = bets[marketId][user];
         return (b.amount, b.isYes);
     }
