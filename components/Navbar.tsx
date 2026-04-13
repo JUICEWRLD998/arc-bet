@@ -2,35 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { ConnectKitButton } from "connectkit";
 import { ModeToggle } from "@/components/ModeToggle";
 
-function ConnectButton() {
-  const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
-
-  if (isConnected && address) {
-    return (
-      <button
-        onClick={() => disconnect()}
-        className="px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-mono"
-      >
-        {address.slice(0, 6)}…{address.slice(-4)}
-      </button>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => connect({ connector: connectors[0] })}
-      disabled={isPending}
-      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-sm font-semibold text-white transition-colors"
-    >
-      {isPending ? "Connecting…" : "Connect Wallet"}
-    </button>
-  );
-}
 
 export function Navbar() {
   const pathname = usePathname();
@@ -59,7 +33,7 @@ export function Navbar() {
         {/* Right side */}
         <div className="flex items-center gap-3">
           <ModeToggle />
-          <ConnectButton />
+          <ConnectKitButton />
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
+import { ConnectKitProvider } from "connectkit";
 import { useState } from "react";
 import { wagmiConfig } from "@/lib/wagmi";
 
@@ -13,7 +14,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          {children}
+          <ConnectKitProvider mode="auto">
+            {children}
+          </ConnectKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>

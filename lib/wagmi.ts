@@ -1,5 +1,6 @@
-import { createConfig, http, injected } from "wagmi";
+import { createConfig, http } from "wagmi";
 import { defineChain } from "viem";
+import { getDefaultConfig } from "connectkit";
 
 export const arcTestnet = defineChain({
   id: 5042002,
@@ -23,9 +24,13 @@ export const arcTestnet = defineChain({
   testnet: true,
 });
 
-export const wagmiConfig = createConfig({
-  chains: [arcTestnet],
-  connectors: [injected()],
-  transports: { [arcTestnet.id]: http("https://rpc.testnet.arc.network") },
-  ssr: true,
-});
+export const wagmiConfig = createConfig(
+  getDefaultConfig({
+    chains: [arcTestnet],
+    transports: { [arcTestnet.id]: http("https://rpc.testnet.arc.network") },
+    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+    appName: "ArcBet",
+    appDescription: "Prediction markets on Arc Network",
+    ssr: true,
+  })
+);

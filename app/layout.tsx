@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "ArcBet — Prediction Markets",
   description:
     "Decentralized YES/NO prediction markets on Arc Network powered by native USDC.",
+  icons: {
+    icon: "/coins.svg",
+  },
 };
 
 export default function RootLayout({
