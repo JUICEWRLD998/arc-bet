@@ -52,7 +52,12 @@ export default function CreatePage() {
         endTime,
         isPrivate,
         isPrivate ? (allowedAddress as `0x${string}`) : "0x0000000000000000000000000000000000000000",
+        "",   // yesLabel — empty for pool-based user markets
+        "",   // noLabel
+        0n,   // oddsYes — 0 = pool-based mode
+        0n,   // oddsNo
       ],
+      value: 0n,
     });
   }
 

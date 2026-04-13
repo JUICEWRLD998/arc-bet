@@ -13,16 +13,22 @@ export const PREDICTION_MARKET_ABI = [
   },
 
   // ─── createMarket ───────────────────────────────────────────────────────
+  // Now payable. Fixed-odds markets send msg.value as the house pool.
+  // Pool-based (legacy) markets pass oddsYes=0, oddsNo=0, value=0.
   {
     inputs: [
       { internalType: "string", name: "question", type: "string" },
       { internalType: "uint256", name: "endTime", type: "uint256" },
       { internalType: "bool", name: "isPrivate", type: "bool" },
       { internalType: "address", name: "allowedAddress", type: "address" },
+      { internalType: "string", name: "yesLabel", type: "string" },
+      { internalType: "string", name: "noLabel", type: "string" },
+      { internalType: "uint256", name: "oddsYes", type: "uint256" },
+      { internalType: "uint256", name: "oddsNo", type: "uint256" },
     ],
     name: "createMarket",
     outputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
 
@@ -42,7 +48,7 @@ export const PREDICTION_MARKET_ABI = [
   {
     inputs: [
       { internalType: "uint256", name: "marketId", type: "uint256" },
-      { internalType: "bool", name: "outcome", type: "bool" },
+      { internalType: "bool", name: "_outcome", type: "bool" },
     ],
     name: "resolveMarket",
     outputs: [],
@@ -54,6 +60,15 @@ export const PREDICTION_MARKET_ABI = [
   {
     inputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
     name: "claimWinnings",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+
+  // ─── withdrawHousePool ──────────────────────────────────────────────────
+  {
+    inputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
+    name: "withdrawHousePool",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -73,6 +88,11 @@ export const PREDICTION_MARKET_ABI = [
       { internalType: "uint256", name: "totalNoPool", type: "uint256" },
       { internalType: "bool", name: "isPrivate", type: "bool" },
       { internalType: "address", name: "allowedAddress", type: "address" },
+      { internalType: "string", name: "yesLabel", type: "string" },
+      { internalType: "string", name: "noLabel", type: "string" },
+      { internalType: "uint256", name: "oddsYes", type: "uint256" },
+      { internalType: "uint256", name: "oddsNo", type: "uint256" },
+      { internalType: "uint256", name: "housePool", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
@@ -147,6 +167,16 @@ export const PREDICTION_MARKET_ABI = [
       { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
     ],
     name: "WinningsClaimed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "marketId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "creator", type: "address" },
+      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
+    ],
+    name: "HousePoolWithdrawn",
     type: "event",
   },
 ] as const;

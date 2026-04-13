@@ -1,9 +1,41 @@
-"use client";
+import { db } from "@/lib/db";
+import OnchainMarketPage from "@/components/OnchainMarketPage";
+import PredMarketPage from "@/components/PredMarketPage";
+import type { Market } from "@/lib/schema";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import {
-  useReadContract,
+// Server component — resolves slug → on-chain numeric ID or predscope market
+export default async function MarketPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
+  // Legacy numeric IDs — route directly to the on-chain page
+  if (/^\d+$/.test(slug)) {
+    return <OnchainMarketPage marketId={BigInt(slug)} />;
+  }
+
+  // Predscope slug — fetch from Neon
+  const market = await db.market.findUnique({ where: { slug } });
+
+  if (!market) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center">
+        <p className="text-zinc-500 dark:text-zinc-400">Market not found.</p>
+      </div>
+    );
+  }
+
+  // Serialize Date for client component prop
+  const serialized = {
+    ...market,
+    syncedAt: market.syncedAt.toISOString(),
+  } as Market & { syncedAt: string };
+
+  return <PredMarketPage market={serialized} />;
+}
+
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
