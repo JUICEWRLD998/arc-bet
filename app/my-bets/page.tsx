@@ -61,7 +61,7 @@ function BetRow({ marketId, address }: { marketId: number; address: `0x${string}
 
   let statusLabel = "Active";
   let statusClass =
-    "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400";
+    "bg-indigo-90 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400";
 
   if (resolved) {
     if (won) {
