@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, http, defineChain, parseAbi } from "viem";
+import { createPublicClient, http, defineChain, parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS } from "@/lib/contracts";
 
 const arcTestnet = defineChain({
@@ -14,9 +14,9 @@ const client = createPublicClient({
   transport: http(process.env.NEXT_PUBLIC_ARC_RPC_URL ?? "https://rpc.testnet.arc.network"),
 });
 
-const BET_PLACED_ABI = parseAbi([
-  "event BetPlaced(uint256 indexed marketId, address indexed bettor, uint256 amount, bool isYes)",
-]);
+const BET_PLACED_EVENT = parseAbiItem(
+  "event BetPlaced(uint256 indexed marketId, address indexed bettor, uint256 amount, bool isYes)"
+);
 
 export interface LeaderboardEntry {
   address: string;
@@ -37,13 +37,13 @@ const CHUNK_SIZE = 9_000n; // under the 10 000-block RPC limit
 const SCAN_WINDOW = 500_000n;
 
 async function fetchBetLogs(fromBlock: bigint, toBlock: bigint) {
-  const all: Awaited<ReturnType<typeof client.getLogs>> = [];
+  const all: Awaited<ReturnType<typeof client.getLogs<undefined, typeof BET_PLACED_EVENT>>> = [];
   let from = fromBlock;
   while (from <= toBlock) {
     const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
     const chunk = await client.getLogs({
       address: CONTRACT_ADDRESS,
-      event: BET_PLACED_ABI[0],
+      event: BET_PLACED_EVENT,
       fromBlock: from,
       toBlock: to,
     });
@@ -64,7 +64,7 @@ export async function GET() {
     const stats = new Map<string, { betsCount: number; totalWagered: bigint; largestBet: bigint }>();
 
     for (const log of betLogs) {
-      const { bettor, amount } = log.args as { bettor: string; amount: bigint };
+      const { bettor, amount } = log.args as { bettor: `0x${string}`; amount: bigint };
       const addr = bettor.toLowerCase();
       const s = stats.get(addr) ?? { betsCount: 0, totalWagered: 0n, largestBet: 0n };
       s.betsCount += 1;
