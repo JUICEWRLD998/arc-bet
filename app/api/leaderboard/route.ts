@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, http, defineChain, parseAbiItem } from "viem";
+import { createPublicClient, http, defineChain, parseAbiItem, type GetLogsReturnType } from "viem";
 import { CONTRACT_ADDRESS } from "@/lib/contracts";
 
 const arcTestnet = defineChain({
@@ -37,7 +37,7 @@ const CHUNK_SIZE = 9_000n; // under the 10 000-block RPC limit
 const SCAN_WINDOW = 500_000n;
 
 async function fetchBetLogs(fromBlock: bigint, toBlock: bigint) {
-  const all: Awaited<ReturnType<typeof client.getLogs<undefined, typeof BET_PLACED_EVENT>>> = [];
+  const all: GetLogsReturnType<typeof BET_PLACED_EVENT> = [];
   let from = fromBlock;
   while (from <= toBlock) {
     const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
