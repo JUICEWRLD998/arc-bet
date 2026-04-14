@@ -28,6 +28,7 @@ export function Navbar() {
           <NavLink href="/" active={pathname === "/"}>Markets</NavLink>
           <NavLink href="/create" active={pathname === "/create"}>Create</NavLink>
           <NavLink href="/my-bets" active={pathname === "/my-bets"}>My Bets</NavLink>
+          <NavLink href="/leaderboard" active={pathname === "/leaderboard"}>Leaderboard</NavLink>
         </nav>
 
         {/* Right side */}
@@ -42,6 +43,7 @@ export function Navbar() {
         <NavLink href="/" active={pathname === "/"}>Markets</NavLink>
         <NavLink href="/create" active={pathname === "/create"}>Create</NavLink>
         <NavLink href="/my-bets" active={pathname === "/my-bets"}>My Bets</NavLink>
+        <NavLink href="/leaderboard" active={pathname === "/leaderboard"}>Leaderboard</NavLink>
       </nav>
     </header>
   );
