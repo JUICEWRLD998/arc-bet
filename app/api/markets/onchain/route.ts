@@ -51,7 +51,7 @@ export async function GET() {
             args: [BigInt(id)],
           });
           const [question, creator, endTime, resolved, outcome, totalYesPool, totalNoPool, isPrivate] =
-            data as [string, string, bigint, boolean, boolean, bigint, bigint, boolean, ...unknown[]];
+            data as unknown as [string, string, bigint, boolean, boolean, bigint, bigint, boolean, ...unknown[]];
           return {
             id,
             question,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useReadContract,
   useWriteContract,
@@ -8,6 +8,7 @@ import {
   useAccount,
 } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { PREDICTION_MARKET_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
 
@@ -48,12 +49,19 @@ interface Props {
 
 export default function OnchainMarketPage({ marketId }: Props) {
   const { address, isConnected } = useAccount();
+  const searchParams = useSearchParams();
 
   const [betAmount, setBetAmount] = useState("");
   const [betError, setBetError] = useState("");
   const [activeBetSide, setActiveBetSide] = useState<"yes" | "no" | null>(null);
   const [activeTx, setActiveTx] = useState<"bet" | "resolve" | "claim" | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Pre-select side from ?side= query param (set when coming from PredMarketPage)
+  useEffect(() => {
+    const side = searchParams.get("side");
+    if (side === "yes" || side === "no") setActiveBetSide(side);
+  }, [searchParams]);
 
   function handleShare() {
     const url = `${window.location.origin}/market/${marketId}`;
@@ -135,9 +143,9 @@ export default function OnchainMarketPage({ marketId }: Props) {
   const isFixedOdds = oddsYes > 0n;
   const totalPool = totalYesPool + totalNoPool;
   const yesPercent = totalPool > 0n ? Number((totalYesPool * 100n) / totalPool) : 50;
-  const formattedYes = Number(formatUnits(totalYesPool, 6)).toFixed(2);
-  const formattedNo = Number(formatUnits(totalNoPool, 6)).toFixed(2);
-  const formattedTotal = Number(formatUnits(totalPool, 6)).toFixed(2);
+  const formattedYes = Number(formatUnits(totalYesPool, 18)).toFixed(2);
+  const formattedNo = Number(formatUnits(totalNoPool, 18)).toFixed(2);
+  const formattedTotal = Number(formatUnits(totalPool, 18)).toFixed(2);
 
   const now = Math.floor(Date.now() / 1000);
   const hasEnded = now >= Number(endTime);
@@ -165,7 +173,7 @@ export default function OnchainMarketPage({ marketId }: Props) {
       setBetError("Enter a bet amount.");
       return;
     }
-    const value = parseUnits(betAmount, 6);
+    const value = parseUnits(betAmount, 18);
     setActiveBetSide(isYes ? "yes" : "no");
     setActiveTx("bet");
     writeContract({
@@ -296,7 +304,7 @@ export default function OnchainMarketPage({ marketId }: Props) {
             <div>
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Your position</p>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                {Number(formatUnits(userBetAmount, 6)).toFixed(2)} USDC on{" "}
+                {Number(formatUnits(userBetAmount, 18)).toFixed(2)} USDC on{" "}
                 <span className={userBetSide ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-rose-600 dark:text-rose-400 font-semibold"}>
                   {userBetSide ? "YES" : "NO"}
                 </span>

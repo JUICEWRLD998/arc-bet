@@ -53,10 +53,11 @@ function BetRow({ marketId, address }: { marketId: number; address: `0x${string}
   // No bet placed on this market
   if (betAmount === 0n) return null;
 
-  const [question, , endTime, resolved, outcome] = marketData;
+  const [question, creator, endTime, resolved, outcome] = marketData;
   const hasEnded = Math.floor(Date.now() / 1000) >= Number(endTime);
   const won = resolved && betSide === outcome;
   const lost = resolved && betSide !== outcome;
+  const isCreator = address?.toLowerCase() === (creator as string)?.toLowerCase();
 
   let statusLabel = "Active";
   let statusClass =
@@ -102,27 +103,52 @@ function BetRow({ marketId, address }: { marketId: number; address: `0x${string}
             {betSide ? "YES" : "NO"}
           </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {Number(formatUnits(betAmount, 6)).toFixed(2)} USDC
+            {Number(formatUnits(betAmount, 18)).toFixed(2)} USDC
           </span>
         </div>
       </div>
 
-      {won && !claimed && !isSuccess && (
-        <button
-          onClick={() =>
-            writeContract({
-              address: CONTRACT_ADDRESS,
-              abi: PREDICTION_MARKET_ABI,
-              functionName: "claimWinnings",
-              args: [BigInt(marketId)],
-            })
-          }
-          disabled={isBusy}
-          className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold flex items-center gap-2 transition-colors"
-        >
-          {isBusy ? <><Spinner /> Claiming…</> : "Claim Winnings"}
-        </button>
-      )}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Resolve prompt for creators whose market ended but isn't resolved */}
+        {isCreator && hasEnded && !resolved && (
+          <Link
+            href={`/market/${marketId}`}
+            className="px-3 py-2 rounded-xl border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors whitespace-nowrap"
+          >
+            Resolve now →
+          </Link>
+        )}
+
+        {/* Claim action — always visible, state-dependent */}
+        {claimed || isSuccess ? (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold px-3 py-2">✓ Claimed</span>
+        ) : resolved && lost ? (
+          <span className="text-xs text-rose-500 dark:text-rose-400 font-semibold px-3 py-2">Lost</span>
+        ) : resolved && won ? (
+          <button
+            onClick={() =>
+              writeContract({
+                address: CONTRACT_ADDRESS,
+                abi: PREDICTION_MARKET_ABI,
+                functionName: "claimWinnings",
+                args: [BigInt(marketId)],
+              })
+            }
+            disabled={isBusy}
+            className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold flex items-center gap-2 transition-colors"
+          >
+            {isBusy ? <><Spinner /> Claiming…</> : "Claim Winnings"}
+          </button>
+        ) : (
+          <button
+            disabled
+            title={hasEnded ? "Awaiting creator resolution" : "Betting still open"}
+            className="shrink-0 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 text-sm font-semibold cursor-not-allowed flex items-center gap-2"
+          >
+            Claim
+          </button>
+        )}
+      </div>
     </div>
   );
 }

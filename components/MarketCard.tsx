@@ -43,7 +43,7 @@ export function MarketCard({
     totalPool > 0n ? Number((totalYesPool * 100n) / totalPool) : 50;
   const noPercent = 100 - yesPercent;
   const countdown = useCountdown(endTime);
-  const formattedPool = Number(formatUnits(totalPool, 6)).toLocaleString(
+  const formattedPool = Number(formatUnits(totalPool, 18)).toLocaleString(
     undefined,
     { minimumFractionDigits: 2, maximumFractionDigits: 2 }
   );

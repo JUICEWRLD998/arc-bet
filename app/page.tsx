@@ -155,7 +155,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Pagination — only for predscope categories */}
+        {/* Pagination — only for polymarket categories */}
         {!loading && category !== "custom" && totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 pt-4">
             <button

@@ -13,7 +13,7 @@ export default function OnchainMarketCard({ market }: { market: OnchainMarket })
   const totalPool = totalYes + totalNo;
   const yesPercent = totalPool > 0n ? Number((totalYes * 100n) / totalPool) : 50;
 
-  const formattedTotal = Number(formatUnits(totalPool, 6)).toFixed(2);
+  const formattedTotal = Number(formatUnits(totalPool, 18)).toFixed(2);
 
   const statusLabel = market.resolved
     ? market.outcome
