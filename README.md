@@ -155,7 +155,3 @@ forge test --gas-report
 - Markets from PredScope: fixed-odds with house pool and creator initial stake
 - All bets use native token (USDC on Arc) via `msg.value`
 - Creator must place first bet as part of market creation flow
-
-## License
-
-MIT
